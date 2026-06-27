@@ -1,0 +1,54 @@
+enum Option<T> {
+  Some(T)
+  None
+}
+
+fn is_some<T>(opt: Option<T>) -> bool {
+  match opt {
+    Some(_) -> true
+    None -> false
+  }
+}
+
+fn is_none<T>(opt: Option<T>) -> bool {
+  match opt {
+    Some(_) -> false
+    None -> true
+  }
+}
+
+fn map<T, U>(opt: Option<T>, f: fn(T) -> U) -> Option<U> {
+  match opt {
+    Some(value) -> Some(f(value))
+    None -> None
+  }
+}
+
+fn unwrap_or<T>(opt: Option<T>, default: T) -> T {
+  match opt {
+    Some(value) -> value
+    None -> default
+  }
+}
+
+fn flat<T>(opt: Option<Option<T>>) -> Option<T> {
+  unwrap_or(opt, None)
+}
+
+fn and_then<T, U>(opt: Option<T>, f: fn(T) -> Option<U>) -> Option<U> {
+  map(opt, f) |> flat()
+}
+
+fn or<T>(opt: Option<T>, default: Option<T>) -> Option<T> {
+  match opt {
+    Some(_) -> opt
+    None -> default
+  }
+}
+
+fn or_else<T>(opt: Option<T>, f: fn() -> Option<T>) -> Option<T> {
+  match opt {
+    Some(_) -> opt
+    None -> f()
+  }
+}
