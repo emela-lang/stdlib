@@ -1,0 +1,12 @@
+import platform.io._write_stdout_utf8!
+import platform.io._read_stdin_utf8!
+
+#[requires(Stdout)]
+fn write_stdout_utf8!(value: String) -> Result<Unit, PlatformError> {
+  _write_stdout_utf8!(value)
+}
+
+#[requires(Stdin)]
+fn read_stdin_utf8!() -> Result<String, PlatformError> {
+  _read_stdin_utf8!()
+}

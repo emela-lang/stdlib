@@ -1,0 +1,6 @@
+import platform.clock._now_i32!
+
+#[requires(Clock)]
+fn now_i32!() -> I32 {
+  _now_i32!()
+}
