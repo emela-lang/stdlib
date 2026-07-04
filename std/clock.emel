@@ -1,6 +1,7 @@
-import platform.clock._now_i32!
+module clock
 
-#[requires(Clock)]
-fn now_i32!() -> I32 {
-  _now_i32!()
+extern fn monotonic_seconds() -> Int uses { clock }
+
+pub fn now() -> Int uses { clock } {
+  monotonic_seconds()
 }
