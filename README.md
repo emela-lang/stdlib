@@ -1,44 +1,83 @@
 # Emela Standard Library
 
-This directory contains the first source-layout sketch of the Emela standard
-library.
+The Emela standard library, distributed as a **Pome** (spec 0032).
 
-The public API is written in Emela under `std/`. Backend-specific platform
-extern declarations live in backend manifests.
+- **Source path:** `github.com/emela-lang/stdlib`
+- **Import root:** `std` (declared by `[pome].module` in `Pome.toml`; without it
+  the root would default to the source-path leaf `stdlib`)
 
-Current compiler limitations:
-
-- The resolver expands only the requested stdlib API and the dependencies it
-  calls. Backends do not need to implement unused platform imports from the same
-  stdlib module.
-- There is no alias import yet. The stdlib uses private platform extern names
-  such as `platform.io._write_stdout_utf8!` so the public wrapper can be named
-  `write_stdout_utf8!`.
-- Native bindings call C ABI runtime symbols. Runtime implementations live
-  under `compiler/backends/`.
+A Pome is Emela's unit of distribution: one or more modules supplied as a Git
+repository, identified by its source path and versioned by `v`-prefixed semver
+git tags. There is no central registry — a Pome is fetched straight from the
+repository its source path names.
 
 ## Layout
 
+Modules live under `src/`, one file per module. `Pome.toml` at the root declares
+the Pome's identity.
+
 ```text
 stdlib/
-  std/
-    io.emel
+  Pome.toml
+  src/
     clock.emel
+    int.emel
+    io.emel
+    list.emel
+    option.emel
+    ord.emel
 ```
 
-## Public API
+## Use as a dependency
 
-- `std.io.write_stdout_utf8!(value: String) -> Result<Unit, PlatformError>`
-- `std.io.read_stdin_utf8!() -> Result<String, PlatformError>`
-- `std.clock.now_i32!() -> I32`
+From inside your own Pome:
 
-## Native
+```sh
+emela pome add github:emela-lang/stdlib   # fetch, pin in Pome.lock, audit capabilities
+emela build src/main.emel                 # dependencies are on the import path automatically
+```
 
-The built-in native backend binds private platform externs to C ABI runtime
-symbols. Those symbols are implemented by runtime C files under
-`compiler/backends/`.
+Once it is a dependency, the modules are addressed under the import root `std`,
+so `src/io.emel` (`module io`) is used as:
 
-## JavaScript
+```emela
+import std.io.print   -- callable as print, io.print, or std.io.print
+```
 
-The built-in JavaScript backend calls runtime symbols implemented by
-`compiler/backends/js-*/runtime.js`.
+`emela pome add` records the dependency in your `Pome.toml` under its canonical
+source path and pins the resolved tag + commit + content hash in `Pome.lock`.
+Because a Pome's required capabilities are computable from source (spec 0025),
+it also prints the capability set this library requires before committing.
+
+## Modules
+
+- `std.clock` — monotonic time (`now`). Requires the `clock` capability.
+- `std.int` — integer helpers (`abs`, `signum`, `is_even`, `is_odd`, `pow`,
+  `gcs`).
+- `std.io` — standard output / error (`print`, `eprint`). Requires the `io`
+  capability.
+- `std.list` — the `List<T>` type and operations (`length`, `is_empty`, `head`,
+  `tail`, `prepend`, `reverse`, `append`, `map`, `filter`, `fold`, `contains`).
+- `std.option` — helpers over the prelude `Option<T>` type.
+- `std.ord` — ordering helpers (`min`, `max`, `clamp`).
+
+Side effects enter only through **platform functions** (`extern fn`), resolved
+by the selected backend's runtime. A stdlib module wraps them so app code never
+names a backend directly (see `src/io.emel`, `src/clock.emel`).
+
+## Publishing
+
+Publishing is just tagging — there is no central `publish` step:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Consumers can then depend on `github.com/emela-lang/stdlib` with a version
+requirement such as `^0.1`.
+
+## Local development
+
+To resolve a dependency against a local checkout or mirror (offline development,
+CI), set `EMELA_POME_REPLACE="github.com/emela-lang/stdlib=/path/to/stdlib"`;
+`EMELA_POME_CACHE` redirects the fetch cache.

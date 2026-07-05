@@ -1,0 +1,5 @@
+[pome]
+name = "github.com/emela-lang/stdlib"
+version = "0.1.0"
+emela = "0.1"
+module = "std"
