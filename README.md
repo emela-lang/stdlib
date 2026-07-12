@@ -40,11 +40,21 @@ emela pome add github:emela-lang/stdlib   # fetch, pin in Pome.lock, audit capab
 emela build src/main.emel                 # dependencies are on the import path automatically
 ```
 
-Once it is a dependency, the modules are addressed under the import root `std`,
-so `src/io.emel` (`module io`) is used as:
+Once it is a dependency, the modules are addressed under the import root `std`.
+Effect modules are imported whole and their operations are called qualified
+(spec 0036), so `src/io.emel` (`effect io`) is used as:
 
 ```emela
-import std.io.print   -- callable as print, io.print, or std.io.print
+import std.io   -- import the io effect; call its operations as io.print(...)
+
+io.print("hi")
+```
+
+Pure modules keep per-function imports, so `src/list.emel` (`module list`) is
+used as:
+
+```emela
+import std.list.map   -- callable as map, list.map, or std.list.map
 ```
 
 `emela pome add` records the dependency in your `Pome.toml` under its canonical
@@ -54,12 +64,13 @@ it also prints the capability set this library requires before committing.
 
 ## Modules
 
-- `std.clock` — monotonic time (`now`). Requires the `clock` capability.
+- `std.clock` — the `clock` effect: monotonic time (`clock.now`). Requires the
+  `clock` capability.
 - `std.float` — float helpers (`abs`, `min`, `max`, `sqrt`).
 - `std.int` — integer helpers (`abs`, `signum`, `is_even`, `is_odd`, `pow`,
   `gcd`).
-- `std.io` — standard output / error (`print`, `eprint`). Requires the `io`
-  capability.
+- `std.io` — the `io` effect: standard output / error (`io.print`,
+  `io.eprint`). Requires the `io` capability.
 - `std.list` — the `List<T>` and `Pair<A, B>` types and operations (`length`,
   `is_empty`, `head`, `tail`, `prepend`, `reverse`, `append`, `map`, `filter`,
   `fold`, `contains`, `from_array`, `to_array`, `flat_map`, `zip`, `take`,
@@ -73,9 +84,10 @@ it also prints the capability set this library requires before committing.
 - `std.string` — scalar string operations (`length`, `is_empty`, `char_at`,
   `slice`, `chars`).
 
-Side effects enter only through **platform functions** (`extern fn`), resolved
-by the selected backend's runtime. A stdlib module wraps them so app code never
-names a backend directly (see `src/io.emel`, `src/clock.emel`).
+Side effects enter only through **effects** (spec 0036): `io` and `clock` are
+`effect` declarations whose operations wrap **platform functions** (`extern fn`)
+resolved by the selected backend's runtime, so app code never names a backend
+directly (see `src/io.emel`, `src/clock.emel`).
 
 ## Publishing
 
