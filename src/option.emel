@@ -1,69 +1,92 @@
 module option
 
-fn is_some<T>(opt: Option<T>) -> Bool {
+-- Combinators over the prelude `Option<T>` type (spec 0031). All are pure
+-- Emela (`match`). Following spec 0011/0031, there is deliberately no panicking
+-- `unwrap`: `ok_or` is the one standard bridge from absence (`None`) to the
+-- error channel (`throws`).
+--
+-- The higher-order combinators take a pure callback (`uses {}`). Effect-row
+-- polymorphism (`uses 'e`, spec 0022/0023) is not yet in the language, so an
+-- effectful callback is a follow-up once that lands.
+
+pub fn is_some<T>(opt: Option<T>) -> Bool {
   match opt {
     Some(_) -> true
     None -> false
   }
 }
 
-fn is_none<T>(opt: Option<T>) -> Bool {
+pub fn is_none<T>(opt: Option<T>) -> Bool {
   match opt {
     Some(_) -> false
     None -> true
   }
 }
 
-fn unwrap_or<T>(opt: Option<T>, default: T) -> T {
+pub fn unwrap_or<T>(opt: Option<T>, default: T) -> T {
   match opt {
     Some(value) -> value
     None -> default
   }
 }
 
-fn unwrap_or_else<T>(opt: Option<T>, f: () -> T) -> T {
+-- Lazy default (spec 0031 Open Questions): `f` runs only when `opt` is `None`.
+pub fn unwrap_or_else<T>(opt: Option<T>, f: () -> T) -> T {
   match opt {
     Some(value) -> value
     None -> f()
   }
 }
 
-fn get_or_panic<T>(opt: Option<T>, msg: String) -> T {
-  match opt {
-    Some(value) -> value
-    None -> panic(msg)
-  }
-}
-
-fn map<T, U>(opt: Option<T>, f: (T) -> U) -> Option<U> {
+pub fn map<T, U>(opt: Option<T>, f: (T) -> U) -> Option<U> {
   match opt {
     Some(value) -> Some(f(value))
     None -> None
   }
 }
 
-fn and_then<T, U>(opt: Option<T>, f: (T) -> Option<U>) -> Option<U> {
+pub fn and_then<T, U>(opt: Option<T>, f: (T) -> Option<U>) -> Option<U> {
   match opt {
     Some(value) -> f(value)
     None -> None
   }
 }
 
-fn or_else<T>(opt: Option<T>, f: () -> Option<T>) -> Option<T> {
+-- `Some` stays; `None` is replaced by the eager alternative `alt` (spec 0031).
+pub fn or<T>(opt: Option<T>, alt: Option<T>) -> Option<T> {
+  match opt {
+    Some(_) -> opt
+    None -> alt
+  }
+}
+
+-- Lazy alternative (spec 0031 Open Questions): `f` runs only when `opt` is
+-- `None`.
+pub fn or_else<T>(opt: Option<T>, f: () -> Option<T>) -> Option<T> {
   match opt {
     Some(_) -> opt
     None -> f()
   }
 }
 
-fn filter<T>(opt: Option<T>, predicate: (T) -> Bool) -> Option<T> {
+-- Bridges absence to the error channel (spec 0011/0031): `Some(v)` yields `v`,
+-- `None` throws `e`. This is the one standard `Option` -> `throws` conversion;
+-- there is no implicit coercion.
+pub fn ok_or<T, E>(opt: Option<T>, e: E) -> T throws E {
+  match opt {
+    Some(value) -> value
+    None -> throw e
+  }
+}
+
+pub fn filter<T>(opt: Option<T>, predicate: (T) -> Bool) -> Option<T> {
   match opt {
     Some(value) if predicate(value) -> Some(value)
     _ -> None
   }
 }
 
-fn flatten<T>(opt: Option<Option<T>>) -> Option<T> {
+pub fn flatten<T>(opt: Option<Option<T>>) -> Option<T> {
   match opt {
     Some(inner) -> inner
     None -> None

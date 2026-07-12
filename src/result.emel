@@ -1,0 +1,72 @@
+module result
+
+-- `Result<T, E>`: a success (`Ok`) or failure (`Err`) carried as a value. Emela's
+-- primary error channel is `throws` (spec 0011); `Result` complements it for
+-- cases where an outcome is passed around as data (collected, stored, mapped)
+-- rather than propagated. All combinators are pure Emela (`match`).
+
+pub enum Result<T, E> {
+  Ok(T)
+  Err(E)
+}
+
+pub fn is_ok<T, E>(r: Result<T, E>) -> Bool {
+  match r {
+    Ok(_) -> true
+    Err(_) -> false
+  }
+}
+
+pub fn is_err<T, E>(r: Result<T, E>) -> Bool {
+  match r {
+    Ok(_) -> false
+    Err(_) -> true
+  }
+}
+
+-- Maps the success value, leaving an `Err` untouched.
+pub fn map<T, U, E>(r: Result<T, E>, f: (T) -> U) -> Result<U, E> {
+  match r {
+    Ok(value) -> Result::Ok(f(value))
+    Err(e) -> Result::Err(e)
+  }
+}
+
+-- Maps the error value, leaving an `Ok` untouched.
+pub fn map_err<T, E, F>(r: Result<T, E>, f: (E) -> F) -> Result<T, F> {
+  match r {
+    Ok(value) -> Result::Ok(value)
+    Err(e) -> Result::Err(f(e))
+  }
+}
+
+-- Chains a `Result`-returning computation on the success value (flatMap).
+pub fn and_then<T, U, E>(r: Result<T, E>, f: (T) -> Result<U, E>) -> Result<U, E> {
+  match r {
+    Ok(value) -> f(value)
+    Err(e) -> Result::Err(e)
+  }
+}
+
+pub fn unwrap_or<T, E>(r: Result<T, E>, default: T) -> T {
+  match r {
+    Ok(value) -> value
+    Err(_) -> default
+  }
+}
+
+-- The success value as an `Option`, discarding the error (spec 0031 bridge).
+pub fn ok<T, E>(r: Result<T, E>) -> Option<T> {
+  match r {
+    Ok(value) -> Some(value)
+    Err(_) -> None
+  }
+}
+
+-- The error value as an `Option`, discarding the success.
+pub fn err<T, E>(r: Result<T, E>) -> Option<E> {
+  match r {
+    Ok(_) -> None
+    Err(e) -> Some(e)
+  }
+}
