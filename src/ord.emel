@@ -17,14 +17,11 @@ pub fn max<T: Ord>(a: T, b: T) -> T {
 }
 
 pub fn clamp<T: Ord>(value: T, low: T, high: T) -> T {
-  -- Written with a nested `if` because `else if` is not supported yet.
   if value < low {
     low
+  } else if value > high {
+    high
   } else {
-    if value > high {
-      high
-    } else {
-      value
-    }
+    value
   }
 }

@@ -21,11 +21,14 @@ stdlib/
   Pome.toml
   src/
     clock.emel
+    float.emel
     int.emel
     io.emel
     list.emel
     option.emel
     ord.emel
+    result.emel
+    string.emel
 ```
 
 ## Use as a dependency
@@ -52,14 +55,23 @@ it also prints the capability set this library requires before committing.
 ## Modules
 
 - `std.clock` — monotonic time (`now`). Requires the `clock` capability.
+- `std.float` — float helpers (`abs`, `min`, `max`, `sqrt`).
 - `std.int` — integer helpers (`abs`, `signum`, `is_even`, `is_odd`, `pow`,
-  `gcs`).
+  `gcd`).
 - `std.io` — standard output / error (`print`, `eprint`). Requires the `io`
   capability.
-- `std.list` — the `List<T>` type and operations (`length`, `is_empty`, `head`,
-  `tail`, `prepend`, `reverse`, `append`, `map`, `filter`, `fold`, `contains`).
-- `std.option` — helpers over the prelude `Option<T>` type.
+- `std.list` — the `List<T>` and `Pair<A, B>` types and operations (`length`,
+  `is_empty`, `head`, `tail`, `prepend`, `reverse`, `append`, `map`, `filter`,
+  `fold`, `contains`, `from_array`, `to_array`, `flat_map`, `zip`, `take`,
+  `drop`, `range`).
+- `std.option` — combinators over the prelude `Option<T>` type (`is_some`,
+  `is_none`, `unwrap_or`, `unwrap_or_else`, `map`, `and_then`, `or`, `or_else`,
+  `ok_or`, `filter`, `flatten`).
 - `std.ord` — ordering helpers (`min`, `max`, `clamp`).
+- `std.result` — the `Result<T, E>` type and combinators (`is_ok`, `is_err`,
+  `map`, `map_err`, `and_then`, `unwrap_or`, `ok`, `err`).
+- `std.string` — scalar string operations (`length`, `is_empty`, `char_at`,
+  `slice`, `chars`).
 
 Side effects enter only through **platform functions** (`extern fn`), resolved
 by the selected backend's runtime. A stdlib module wraps them so app code never

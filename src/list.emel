@@ -5,16 +5,22 @@ pub enum List<T> {
   Cons(T, List<T>)
 }
 
+-- A positional pair, used as the element type of `zip`. Records (spec 0006) are
+-- not yet available, so this is a single-variant generic enum (spec 0028).
+pub enum Pair<A, B> {
+  Pair(A, B)
+}
+
 impl<T> Add for List<T> {
-  fn add(a: List<T>, b: List<T>) -> List<T> {
+  fn add(a: List<T>, b: List<T>) -> List<T> uses {} {
     append(a, b)
   }
 }
 
-pub fn length<T>(list: List<T>) -> int {
+pub fn length<T>(list: List<T>) -> Int {
   match list {
-    Nil => 0
-    Cons(_, tail) => 1 + length(tail)
+    Nil -> 0
+    Cons(_, tail) -> 1 + length(tail)
   }
 }
 
@@ -103,5 +109,86 @@ pub fn contains<T: Eq>(list: List<T>, x: T) -> Bool {
     } else {
       contains(t, x)
     }
+  }
+}
+
+-- Conversions between the fixed-length `Array<T>` (spec 0007) and `List<T>`
+-- (spec 0029). Both preserve order. They rely on the built-in array operations
+-- `Array::length` / `Array::get` / `Array::push`.
+fn from_array_helper<T>(xs: Array<T>, i: Int, acc: List<T>) -> List<T> {
+  if i < 0 {
+    acc
+  } else {
+    from_array_helper(xs, i - 1, List::Cons(Array::get(xs, i), acc))
+  }
+}
+
+pub fn from_array<T>(xs: Array<T>) -> List<T> {
+  from_array_helper(xs, Array::length(xs) - 1, List::Nil)
+}
+
+fn to_array_helper<T>(list: List<T>, acc: Array<T>) -> Array<T> {
+  match list {
+    Nil -> acc
+    Cons(h, t) -> to_array_helper(t, Array::push(acc, h))
+  }
+}
+
+pub fn to_array<T>(list: List<T>) -> Array<T> {
+  -- A typed empty array to seed the accumulator (`[]` alone is not inferrable).
+  let empty: Array<T> = []
+  to_array_helper(list, empty)
+}
+
+-- Maps each element to a list and concatenates the results, preserving order
+-- (spec 0029 Open Questions).
+pub fn flat_map<T, U>(list: List<T>, f: (T) -> List<U>) -> List<U> {
+  match list {
+    Nil -> List::Nil
+    Cons(h, t) -> append(f(h), flat_map(t, f))
+  }
+}
+
+-- Pairs elements positionally, stopping at the shorter list (spec 0029).
+pub fn zip<T, U>(xs: List<T>, ys: List<U>) -> List<Pair<T, U>> {
+  match xs {
+    Nil -> List::Nil
+    Cons(xh, xt) -> match ys {
+      Nil -> List::Nil
+      Cons(yh, yt) -> List::Cons(Pair::Pair(xh, yh), zip(xt, yt))
+    }
+  }
+}
+
+-- The first `n` elements (fewer if the list is shorter), preserving order.
+pub fn take<T>(list: List<T>, n: Int) -> List<T> {
+  if n <= 0 {
+    List::Nil
+  } else {
+    match list {
+      Nil -> List::Nil
+      Cons(h, t) -> List::Cons(h, take(t, n - 1))
+    }
+  }
+}
+
+-- Everything after the first `n` elements (empty if the list is shorter).
+pub fn drop<T>(list: List<T>, n: Int) -> List<T> {
+  if n <= 0 {
+    list
+  } else {
+    match list {
+      Nil -> List::Nil
+      Cons(h, t) -> drop(t, n - 1)
+    }
+  }
+}
+
+-- The ascending list `[start, start + 1, ..., end - 1]` (empty if start >= end).
+pub fn range(start: Int, end: Int) -> List<Int> {
+  if start >= end {
+    List::Nil
+  } else {
+    List::Cons(start, range(start + 1, end))
   }
 }

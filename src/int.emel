@@ -9,15 +9,12 @@ pub fn abs(n: Int) -> Int {
 }
 
 pub fn signum(n: Int) -> Int {
-  -- Nested `if` because `else if` is not supported yet.
   if n < 0 {
     0 - 1
+  } else if n > 0 {
+    1
   } else {
-    if n > 0 {
-      1
-    } else {
-      0
-    }
+    0
   }
 }
 
@@ -37,10 +34,10 @@ pub fn pow(base: Int, exp: Int) -> Int {
   }
 }
 
-pub fn gcs(a: Int, b: Int) -> Int {
+pub fn gcd(a: Int, b: Int) -> Int {
   if b == 0 {
     a
   } else {
-    gcs(b, a % b)
+    gcd(b, a % b)
   }
 }
