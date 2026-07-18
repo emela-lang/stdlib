@@ -1,15 +1,32 @@
 # Emela Standard Library
 
-The Emela standard library, distributed as a **Pome** (spec 0032).
+The Emela standard library's **pure layer**, distributed as a **Pome** (spec
+0032).
 
 - **Source path:** `github.com/emela-lang/stdlib`
 - **Import root:** `std` (declared by `[pome].module` in `Pome.toml`; without it
   the root would default to the source-path leaf `stdlib`)
+- **Requires:** emela ≥ 0.5 (the first release with the embedded core, spec
+  0038)
 
 A Pome is Emela's unit of distribution: one or more modules supplied as a Git
 repository, identified by its source path and versioned by `v`-prefixed semver
 git tags. There is no central registry — a Pome is fetched straight from the
 repository its source path names.
+
+## The core/std boundary (spec 0038)
+
+This Pome contains **pure Emela only**. Every std module that declares
+`intrinsic fn` (spec 0021) or platform `extern fn` (spec 0013) — `core`, `io`,
+`clock`, `string`, `float` — is **embedded in the compiler** and resolves with
+no dependency at all: those declarations are version-locked to the backends
+that supply them, so they ship together. `import std.io` works out of the box;
+this Pome provides everything else, and may not (and does not) declare
+intrinsics or externs of its own. The embedded module names are reserved: a
+package addressed as `std` providing one of them is a compile error.
+
+This layer is where contributions land — new combinators and modules here are
+plain Emela code, needing no compiler changes.
 
 ## Layout
 
@@ -20,15 +37,11 @@ the Pome's identity.
 stdlib/
   Pome.toml
   src/
-    clock.emel
-    float.emel
     int.emel
-    io.emel
     list.emel
     option.emel
     ord.emel
     result.emel
-    string.emel
 ```
 
 ## Use as a dependency
@@ -40,37 +53,28 @@ emela pome add github:emela-lang/stdlib   # fetch, pin in Pome.lock, audit capab
 emela build src/main.emel                 # dependencies are on the import path automatically
 ```
 
-Once it is a dependency, the modules are addressed under the import root `std`.
-Effect modules are imported whole and their operations are called qualified
-(spec 0036), so `src/io.emel` (`effect io`) is used as:
+Once it is a dependency, the modules are addressed under the import root `std`,
+alongside the embedded ones:
 
 ```emela
-import std.io   -- import the io effect; call its operations as io.print(...)
+import std.io         -- embedded in the compiler (spec 0038)
+import std.list.map   -- this Pome; callable as map, list.map, or std.list.map
 
-io.print("hi")
-```
-
-Pure modules keep per-function imports, so `src/list.emel` (`module list`) is
-used as:
-
-```emela
-import std.list.map   -- callable as map, list.map, or std.list.map
+fn main() -> Unit uses { io } {
+    io.print(map([1, 2], fn (x: Int) -> Int { x + 1 }))
+}
 ```
 
 `emela pome add` records the dependency in your `Pome.toml` under its canonical
 source path and pins the resolved tag + commit + content hash in `Pome.lock`.
 Because a Pome's required capabilities are computable from source (spec 0025),
-it also prints the capability set this library requires before committing.
+it also prints the capability set this library requires before committing —
+for this Pome that set is empty: the pure layer performs no effects.
 
 ## Modules
 
-- `std.clock` — the `clock` effect: monotonic time (`clock.now`). Requires the
-  `clock` capability.
-- `std.float` — float helpers (`abs`, `min`, `max`, `sqrt`).
 - `std.int` — integer helpers (`abs`, `signum`, `is_even`, `is_odd`, `pow`,
   `gcd`).
-- `std.io` — the `io` effect: standard output / error (`io.print`,
-  `io.eprint`). Requires the `io` capability.
 - `std.list` — the `List<T>` and `Pair<A, B>` types and operations (`length`,
   `is_empty`, `head`, `tail`, `prepend`, `reverse`, `append`, `map`, `filter`,
   `fold`, `contains`, `from_array`, `to_array`, `flat_map`, `zip`, `take`,
@@ -81,24 +85,17 @@ it also prints the capability set this library requires before committing.
 - `std.ord` — ordering helpers (`min`, `max`, `clamp`).
 - `std.result` — the `Result<T, E>` type and combinators (`is_ok`, `is_err`,
   `map`, `map_err`, `and_then`, `unwrap_or`, `ok`, `err`).
-- `std.string` — scalar string operations (`length`, `is_empty`, `char_at`,
-  `slice`, `chars`).
-
-Side effects enter only through **effects** (spec 0036): `io` and `clock` are
-`effect` declarations whose operations wrap **platform functions** (`extern fn`)
-resolved by the selected backend's runtime, so app code never names a backend
-directly (see `src/io.emel`, `src/clock.emel`).
 
 ## Publishing
 
 Publishing is just tagging — there is no central `publish` step:
 
 ```sh
-git tag v0.1.0 && git push origin v0.1.0
+git tag v0.2.0 && git push origin v0.2.0
 ```
 
 Consumers can then depend on `github.com/emela-lang/stdlib` with a version
-requirement such as `^0.1`.
+requirement such as `^0.2`.
 
 ## Local development
 

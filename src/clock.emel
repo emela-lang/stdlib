@@ -1,7 +1,0 @@
-effect clock {
-  extern fn monotonic_seconds() -> Int
-
-  pub fn now() -> Int {
-    monotonic_seconds()
-  }
-}
