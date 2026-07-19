@@ -6,8 +6,8 @@ The Emela standard library's **pure layer**, distributed as a **Pome** (spec
 - **Source path:** `github.com/emela-lang/stdlib`
 - **Import root:** `std` (declared by `[pome].module` in `Pome.toml`; without it
   the root would default to the source-path leaf `stdlib`)
-- **Requires:** emela ≥ 0.5 (the first release with the embedded core, spec
-  0038)
+- **Requires:** emela ≥ 0.6 (module-unit imports and first-class effects, spec
+  0037; the embedded core landed in 0.5, spec 0038)
 
 A Pome is Emela's unit of distribution: one or more modules supplied as a Git
 repository, identified by its source path and versioned by `v`-prefixed semver
@@ -54,14 +54,16 @@ emela build src/main.emel                 # dependencies are on the import path 
 ```
 
 Once it is a dependency, the modules are addressed under the import root `std`,
-alongside the embedded ones:
+alongside the embedded ones. Imports name whole modules, and a module's
+functions are called in qualified form (spec 0037):
 
 ```emela
 import std.io         -- embedded in the compiler (spec 0038)
-import std.list.map   -- this Pome; callable as map, list.map, or std.list.map
+import std.list       -- this Pome; its functions are called as list.<name>
 
-fn main() -> Unit uses { io } {
-    io.print(map([1, 2], fn (x: Int) -> Int { x + 1 }))
+fn main() -> Unit uses { Io } {
+    let xs = list.map(list.from_array([1, 2, 3]), fn (x: Int) -> Int { x + 1 })
+    Io.print(to_string(list.length(xs)) ++ "\n")
 }
 ```
 
