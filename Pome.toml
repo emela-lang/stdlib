@@ -1,5 +1,8 @@
 [pome]
 name = "github.com/emela-lang/stdlib"
 version = "0.3.0"
-emela = "0.6"
+emela = "0.8"
 module = "std"
+
+[dev-dependencies]
+"github.com/emela-lang/brix" = "^0.1.0"

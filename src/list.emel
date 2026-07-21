@@ -152,18 +152,18 @@ fn from_array_helper<T>(xs: Array<T>, i: Int, acc: List<T>) -> List<T> {
   if i < 0 {
     acc
   } else {
-    from_array_helper(xs, i - 1, List::Cons(Array::get(xs, i), acc))
+    from_array_helper(xs, i - 1, List::Cons(array_get_unchecked(xs, i), acc))
   }
 }
 
 pub fn from_array<T>(xs: Array<T>) -> List<T> {
-  from_array_helper(xs, Array::length(xs) - 1, List::Nil)
+  from_array_helper(xs, array_length(xs) - 1, List::Nil)
 }
 
 fn to_array_helper<T>(list: List<T>, acc: Array<T>) -> Array<T> {
   match list {
     Nil -> acc
-    Cons(h, t) -> to_array_helper(t, Array::push(acc, h))
+    Cons(h, t) -> to_array_helper(t, array_push(acc, h))
   }
 }
 
